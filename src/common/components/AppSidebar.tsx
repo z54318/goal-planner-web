@@ -1,7 +1,10 @@
+import { navigateTo } from '../../router/navigation'
+
 type SidebarItem = {
   key: string
   label: string
   description: string
+  path: string
 }
 
 type AppSidebarProps = {
@@ -11,6 +14,7 @@ type AppSidebarProps = {
   activeKey: string
 }
 
+// 左侧菜单栏组件，后续可直接替换为接口返回的菜单数据。
 export function AppSidebar({
   title,
   subtitle,
@@ -36,6 +40,7 @@ export function AppSidebar({
               key={item.key}
               type="button"
               className={`sidebar-link${isActive ? ' is-active' : ''}`}
+              onClick={() => navigateTo(item.path)}
             >
               <span className="sidebar-link-title">{item.label}</span>
               <span className="sidebar-link-desc">{item.description}</span>

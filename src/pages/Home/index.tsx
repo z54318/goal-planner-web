@@ -1,3 +1,4 @@
+// 首页占位页，当前用于承接后台工作台的内容区域。
 export function HomePage() {
   return (
     <section className="dashboard-shell">
@@ -17,6 +18,15 @@ export function HomePage() {
       </div>
 
       <div className="dashboard-grid">
+        <article className="dashboard-card">
+          <p className="card-label">API</p>
+          <h3>后端联通方式</h3>
+          <p>
+            开发环境统一请求 <code>/api/*</code>，由 Vite 代理到
+            <code>http://localhost:8080</code>。
+          </p>
+        </article>
+
         <article className="dashboard-card">
           <p className="card-label">Layout</p>
           <h3>全局布局</h3>
