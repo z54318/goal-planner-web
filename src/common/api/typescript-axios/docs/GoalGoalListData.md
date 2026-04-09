@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**list** | [**Array&lt;GoalGoal&gt;**](GoalGoal.md) |  | [optional] [default to undefined]
-**total** | **number** |  | [optional] [default to undefined]
+**list** | [**Array&lt;GoalGoal&gt;**](GoalGoal.md) | List 目标列表 | [optional] [default to undefined]
+**total** | **number** | Total 总数 | [optional] [default to undefined]
 
 ## Example
 

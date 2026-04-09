@@ -1,0 +1,8 @@
+.app-shell {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.app-main {
+  min-width: 0;
+}

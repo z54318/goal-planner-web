@@ -1,16 +1,16 @@
+import { Paper, Text, Title } from '@mantine/core'
+import './index.css'
+
 type ModulePageProps = {
-  eyebrow: string
   title: string
-  description: string
 }
 
 // 通用模块占位页，用于承接还未开始开发的业务页面。
-export function ModulePage({ eyebrow, title, description }: ModulePageProps) {
+export function ModulePage({ title }: ModulePageProps) {
   return (
-    <section className="module-shell">
-      <p className="page-eyebrow">{eyebrow}</p>
-      <h1>{title}</h1>
-      <p className="page-description">{description}</p>
-    </section>
+    <Paper className="module-shell" radius="xl" p="xl">
+      <Title order={1}>{title}</Title>
+      <Text mt="sm" c="dimmed">该模块页面已占位，后续可以继续在这里接入具体业务能力。</Text>
+    </Paper>
   )
 }

@@ -18,7 +18,13 @@
 import type { GoalGoal } from './goal-goal';
 
 export interface GoalGoalListData {
+    /**
+     * List 目标列表
+     */
     'list'?: Array<GoalGoal>;
+    /**
+     * Total 总数
+     */
     'total'?: number;
 }
 

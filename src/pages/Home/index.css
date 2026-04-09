@@ -1,0 +1,236 @@
+.home-shell {
+  display: grid;
+  gap: 20px;
+}
+
+.dashboard-hero,
+.dashboard-panel,
+.dashboard-stat-card {
+  border: 1px solid var(--border-soft);
+  border-radius: 28px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 32px;
+}
+
+.dashboard-hero h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.06;
+  color: #0f2740;
+}
+
+.dashboard-hero p {
+  margin: 10px 0 0;
+  max-width: 720px;
+  color: var(--text-soft);
+}
+
+.dashboard-refresh-button {
+  border: none;
+  border-radius: 16px;
+  padding: 13px 18px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboard-stat-card {
+  display: grid;
+  gap: 12px;
+  padding: 22px 24px;
+}
+
+.dashboard-stat-card span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #4c6683;
+}
+
+.dashboard-stat-card strong {
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1;
+  color: #14365a;
+}
+
+.dashboard-stat-card p {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.dashboard-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
+  gap: 20px;
+}
+
+.dashboard-panel {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.dashboard-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-panel-header h2 {
+  margin: 0;
+  color: #14365a;
+}
+
+.dashboard-panel-header span {
+  color: var(--text-faint);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dashboard-task-list,
+.dashboard-goal-list {
+  display: grid;
+  gap: 14px;
+}
+
+.dashboard-task-card,
+.dashboard-goal-row {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  width: 100%;
+  border: 1px solid rgba(22, 50, 79, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.dashboard-task-head,
+.dashboard-goal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-task-card strong,
+.dashboard-goal-row strong {
+  color: #17324b;
+}
+
+.dashboard-task-card p,
+.dashboard-goal-row p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+
+.dashboard-task-meta,
+.dashboard-goal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+.dashboard-goal-row {
+  position: relative;
+  padding-right: 110px;
+}
+
+.dashboard-goal-content {
+  min-width: 0;
+}
+
+.dashboard-goal-status {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  flex-shrink: 0;
+}
+
+.dashboard-goal-meta {
+  justify-content: flex-end;
+  padding-right: 0;
+}
+
+.dashboard-task-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboard-task-status.is-todo {
+  background: rgba(64, 158, 255, 0.12);
+  color: #2669b6;
+}
+
+.dashboard-task-status.is-in_progress {
+  background: rgba(230, 162, 60, 0.14);
+  color: #a76d13;
+}
+
+.dashboard-task-status.is-done {
+  background: rgba(103, 194, 58, 0.14);
+  color: #3f8b21;
+}
+
+.dashboard-empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  border: 1px dashed rgba(22, 50, 79, 0.12);
+  border-radius: 22px;
+  color: var(--text-faint);
+}
+
+@media (max-width: 1180px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-hero {
+    display: grid;
+    padding: 22px;
+  }
+
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-panel,
+  .dashboard-stat-card {
+    padding: 20px;
+  }
+
+  .dashboard-task-head,
+  .dashboard-goal-row {
+    display: grid;
+  }
+}

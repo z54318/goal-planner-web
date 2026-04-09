@@ -1,58 +1,53 @@
+import { Box, Paper, ScrollArea, Stack, Text, Title } from '@mantine/core'
 import { navigateTo } from '../../router/navigation'
-
-type SidebarItem = {
-  key: string
-  label: string
-  description: string
-  path: string
-}
+import type { AppMenuItem } from '../../common/menu/app-menu'
+import './AppSidebar.css'
 
 type AppSidebarProps = {
   title: string
-  subtitle: string
-  items: readonly SidebarItem[]
-  activeKey: string
+  items: readonly AppMenuItem[]
+  activePath: string
 }
 
 // 左侧菜单栏组件，后续可直接替换为接口返回的菜单数据。
 export function AppSidebar({
   title,
-  subtitle,
   items,
-  activeKey,
+  activePath,
 }: AppSidebarProps) {
   return (
-    <aside className="app-sidebar">
-      <div className="sidebar-brand">
-        <p className="sidebar-eyebrow">{subtitle}</p>
-        <h1>{title}</h1>
-        <p className="sidebar-copy">
-          菜单数据后续可以直接替换成后端返回的结果。
-        </p>
-      </div>
+    <Paper className="app-sidebar" radius={0} shadow="none">
+      <Box className="sidebar-brand">
+        <Title order={1}>{title}</Title>
+      </Box>
 
-      <nav className="sidebar-nav" aria-label="主导航">
-        {items.map((item) => {
-          const isActive = item.key === activeKey
+      <ScrollArea className="sidebar-scroll" type="never">
+        <Stack className="sidebar-nav" gap="sm" aria-label="主导航" component="nav">
+        {items.length > 0 ? (
+          items.map((item) => {
+            const isActive =
+              item.path === '/'
+                ? activePath === '/'
+                : activePath === item.path || activePath.startsWith(`${item.path}/`)
 
-          return (
-            <button
-              key={item.key}
-              type="button"
-              className={`sidebar-link${isActive ? ' is-active' : ''}`}
-              onClick={() => navigateTo(item.path)}
-            >
-              <span className="sidebar-link-title">{item.label}</span>
-              <span className="sidebar-link-desc">{item.description}</span>
-            </button>
-          )
-        })}
-      </nav>
-
-      <div className="sidebar-footer">
-        <p>菜单架子已就位</p>
-        <span>后续支持权限、动态图标和接口菜单。</span>
-      </div>
-    </aside>
+            return (
+              <button
+                key={item.key}
+                type="button"
+                className={`sidebar-link${isActive ? ' is-active' : ''}`}
+                onClick={() => navigateTo(item.path)}
+              >
+                <Text className="sidebar-link-label">{item.label}</Text>
+              </button>
+            )
+          })
+        ) : (
+          <Paper className="sidebar-empty-state" radius="lg" p="md">
+            <Text fw={700}>暂无菜单</Text>
+          </Paper>
+        )}
+        </Stack>
+      </ScrollArea>
+    </Paper>
   )
 }

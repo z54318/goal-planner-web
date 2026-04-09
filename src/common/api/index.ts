@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import { getAuthToken } from '../auth/token'
 import { appEnv } from '../config/env'
-import { AuthApi, Configuration, GoalsApi } from './typescript-axios'
+import { AuthApi, Configuration, GoalsApi, MenusApi, PlansApi, RbacApi, TasksApi, UsersApi } from './typescript-axios'
 
 // 统一解析 OpenAPI 请求错误，优先展示后端返回的 message。
 function resolveApiErrorMessage(error: AxiosError) {
@@ -24,6 +24,20 @@ export const instance = axios.create({
   withCredentials: true,
 })
 
+instance.interceptors.request.use((config) => {
+  const token = getAuthToken()
+
+  if (token) {
+    config.headers = config.headers ?? {}
+
+    if (!('Authorization' in config.headers) || !config.headers.Authorization) {
+      config.headers.Authorization = token
+    }
+  }
+
+  return config
+})
+
 instance.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => Promise.reject(new Error(resolveApiErrorMessage(error))),
@@ -38,7 +52,7 @@ export const configuration = new Configuration({
     }
 
     const token = getAuthToken()
-    return token ? `Bearer ${token}` : ''
+    return token
   },
   baseOptions: {
     withCredentials: true,
@@ -48,6 +62,11 @@ export const configuration = new Configuration({
 // 实例化自动生成的接口类，后续业务模块统一从这里取用。
 export const authApi = new AuthApi(configuration, undefined, instance)
 export const goalsApi = new GoalsApi(configuration, undefined, instance)
+export const menusApi = new MenusApi(configuration, undefined, instance)
+export const plansApi = new PlansApi(configuration, undefined, instance)
+export const rbacApi = new RbacApi(configuration, undefined, instance)
+export const tasksApi = new TasksApi(configuration, undefined, instance)
+export const usersApi = new UsersApi(configuration, undefined, instance)
 
 export { Configuration }
 export * from './typescript-axios/models'

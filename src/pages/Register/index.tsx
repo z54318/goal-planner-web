@@ -1,6 +1,8 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
+import { Button, Stack, TextInput } from '@mantine/core'
 import { authApi } from '../../common/api'
+import { useAppMessage } from '../../common/message/AppMessageProvider'
 import { PasswordField } from '../../common/components/PasswordField'
 import { AuthLayout } from '../../layout/AuthLayout'
 import { navigateTo } from '../../router/navigation'
@@ -21,9 +23,8 @@ export function RegisterPage() {
     password: '',
     confirmPassword: '',
   })
-  const [errorMessage, setErrorMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const message = useAppMessage()
 
   // 更新注册表单字段，避免每个输入框重复写状态逻辑。
   function updateField<Key extends keyof RegisterFormState>(
@@ -39,11 +40,9 @@ export function RegisterPage() {
   // 校验注册信息后提交接口，请求成功则跳转到登录页。
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setErrorMessage('')
-    setSuccessMessage('')
 
     if (form.password !== form.confirmPassword) {
-      setErrorMessage('两次输入的密码不一致，请重新确认。')
+      message.error('两次输入的密码不一致，请重新确认。')
       return
     }
 
@@ -58,12 +57,12 @@ export function RegisterPage() {
         },
       })
 
-      setSuccessMessage('注册成功，正在跳转到登录页。')
+      message.success('注册成功，正在跳转到登录页。')
       window.setTimeout(() => {
         navigateTo(routes.login, true)
       }, 800)
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '注册失败，请稍后重试。')
+      message.error(error instanceof Error ? error.message : '注册失败，请稍后重试。')
     } finally {
       setIsSubmitting(false)
     }
@@ -78,50 +77,46 @@ export function RegisterPage() {
       alternateActionPath={routes.login}
     >
       <form className="auth-form" onSubmit={handleSubmit}>
-        <label className="auth-field">
-          <span>用户名</span>
-          <input
-            type="text"
+        <Stack gap="md">
+          <TextInput
+            label="用户名"
             placeholder="请输入用户名"
             value={form.username}
-            onChange={(event) => updateField('username', event.target.value)}
+            onChange={(event) => updateField('username', event.currentTarget.value)}
+            radius="md"
+            size="md"
             required
           />
-        </label>
 
-        <label className="auth-field">
-          <span>邮箱</span>
-          <input
+          <TextInput
             type="email"
+            label="邮箱"
             placeholder="you@example.com"
             value={form.email}
-            onChange={(event) => updateField('email', event.target.value)}
+            onChange={(event) => updateField('email', event.currentTarget.value)}
+            radius="md"
+            size="md"
             required
           />
-        </label>
 
-        <PasswordField
-          label="密码"
-          placeholder="请输入登录密码"
-          value={form.password}
-          onChange={(value) => updateField('password', value)}
-        />
+          <PasswordField
+            label="密码"
+            placeholder="请输入登录密码"
+            value={form.password}
+            onChange={(value) => updateField('password', value)}
+          />
 
-        <PasswordField
-          label="确认密码"
-          placeholder="请再次输入密码"
-          value={form.confirmPassword}
-          onChange={(value) => updateField('confirmPassword', value)}
-        />
+          <PasswordField
+            label="确认密码"
+            placeholder="请再次输入密码"
+            value={form.confirmPassword}
+            onChange={(value) => updateField('confirmPassword', value)}
+          />
 
-        {errorMessage ? <p className="auth-feedback is-error">{errorMessage}</p> : null}
-        {successMessage ? (
-          <p className="auth-feedback is-success">{successMessage}</p>
-        ) : null}
-
-        <button type="submit" className="auth-submit-button" disabled={isSubmitting}>
-          {isSubmitting ? '注册中...' : '注册'}
-        </button>
+          <Button type="submit" size="md" radius="md" loading={isSubmitting}>
+            {isSubmitting ? '注册中...' : '注册'}
+          </Button>
+        </Stack>
       </form>
     </AuthLayout>
   )

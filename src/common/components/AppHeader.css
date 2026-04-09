@@ -1,0 +1,32 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 22px 28px;
+  border-bottom: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(18px);
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-user-card {
+  padding: 8px 10px 8px 8px;
+  border-radius: 999px;
+  background: var(--bg-panel-strong);
+  border: 1px solid var(--border-soft);
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 20px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

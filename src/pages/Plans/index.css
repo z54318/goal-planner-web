@@ -1,0 +1,258 @@
+.plans-shell {
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.plans-panel {
+  border: 1px solid var(--border-soft);
+  border-radius: 28px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-md);
+  align-self: start;
+}
+
+.plans-list-panel,
+.plans-detail-panel {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  align-content: start;
+}
+
+.plans-list-panel {
+  min-height: calc(100vh - 168px);
+}
+
+.plans-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.plans-list-header {
+  display: grid;
+  gap: 14px;
+}
+
+.plans-list-refresh {
+  width: fit-content;
+}
+
+.plans-panel-header h1,
+.plans-panel-header h2,
+.plans-phase-card h3 {
+  margin: 0;
+  color: #0f2740;
+}
+
+.plans-panel-header p,
+.plans-phase-card p,
+.plans-task-row p,
+.plans-overview-card p {
+  margin: 8px 0 0;
+  color: var(--text-soft);
+  line-height: 1.75;
+}
+
+.plans-primary-button,
+.plans-secondary-button {
+  border: none;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.plans-primary-button {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+}
+
+.plans-secondary-button {
+  background: rgba(20, 61, 112, 0.08);
+  color: var(--text-main);
+}
+
+.plans-goal-list,
+.plans-phase-list,
+.plans-task-list {
+  display: grid;
+  gap: 14px;
+}
+
+.plans-goal-item,
+.plans-phase-card,
+.plans-overview-card,
+.plans-task-row,
+.plans-metric-card {
+  border: 1px solid rgba(22, 50, 79, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.plans-goal-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.plans-goal-item:hover {
+  transform: translateY(-1px);
+}
+
+.plans-goal-item.is-active {
+  border-color: rgba(45, 108, 223, 0.24);
+  background: linear-gradient(135deg, #2d6cdf, #174ea8);
+  color: #fff;
+}
+
+.plans-goal-item-content {
+  min-height: 52px;
+}
+
+.plans-goal-item strong,
+.plans-task-row strong,
+.plans-metric-card strong {
+  color: #17324b;
+}
+
+.plans-goal-item span,
+.plans-phase-index,
+.plans-task-meta span {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+.plans-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.plans-metric-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 18px;
+  min-height: 112px;
+}
+
+.plans-metric-card span {
+  color: #4c6683;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.plans-metric-value {
+  display: block;
+  margin: 0;
+  line-height: 1.2;
+  color: #0f2740;
+  font-size: clamp(30px, 3.2vw, 38px);
+}
+
+.plans-metric-value.is-title {
+  font-size: 28px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.plans-overview-card {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+}
+
+.plans-overview-meta,
+.plans-phase-header,
+.plans-task-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.plans-overview-meta span {
+  color: #4c6683;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.plans-phase-card {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.plans-phase-index {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.plans-task-row {
+  padding: 16px;
+}
+
+.plans-task-meta {
+  display: grid;
+  gap: 6px;
+  text-align: right;
+}
+
+.plans-empty-state,
+.plans-empty-inline {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  border: 1px dashed rgba(22, 50, 79, 0.12);
+  border-radius: 22px;
+  color: var(--text-faint);
+}
+
+.plans-detail-empty {
+  min-height: 320px;
+}
+
+@media (max-width: 1180px) {
+  .plans-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .plans-list-panel {
+    min-height: auto;
+  }
+
+  .plans-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .plans-panel-header,
+  .plans-overview-meta,
+  .plans-phase-header,
+  .plans-task-row {
+    display: grid;
+  }
+
+  .plans-list-refresh {
+    width: 100%;
+  }
+
+  .plans-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .plans-task-meta {
+    text-align: left;
+  }
+}

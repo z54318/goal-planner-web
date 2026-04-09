@@ -1,0 +1,14 @@
+.module-shell {
+  padding: 28px;
+  border: 1px solid var(--border-soft);
+  border-radius: 28px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-md);
+}
+
+.module-shell h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.08;
+  color: #0f2740;
+}

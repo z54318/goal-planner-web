@@ -1,47 +1,63 @@
-import { clearAuthToken } from '../auth/token'
+import { Avatar, Button, Group, Menu, Paper, Text } from '@mantine/core'
+import {
+  clearAuthToken,
+  clearAuthUsername,
+  getAuthUsername,
+} from '../auth/token'
+import { clearMenuItems } from '../menu/app-menu'
 import { navigateTo } from '../../router/navigation'
 import { routes } from '../../router/routes'
+import './AppHeader.css'
 
 type AppHeaderProps = {
-  title: string
-  subtitle: string
+  title?: string
 }
 
 // 顶部公共导航栏，后续可扩展用户信息、面包屑和全局操作。
-export function AppHeader({ title, subtitle }: AppHeaderProps) {
-  // 清理登录令牌并跳转回登录页，提供最基础的退出能力。
+export function AppHeader({ title: _title }: AppHeaderProps) {
+  const username = getAuthUsername() || '用户'
+  const avatarText = username.slice(0, 2).toUpperCase()
+
+  // 退出登录并回到登录页。
   function handleLogout() {
     clearAuthToken()
+    clearAuthUsername()
+    clearMenuItems()
     navigateTo(routes.login, true)
   }
 
   return (
-    <header className="app-header">
-      <div>
-        <p className="app-header-eyebrow">Global Navigation</p>
-        <h2>{title}</h2>
-        <p className="app-header-subtitle">{subtitle}</p>
-      </div>
+    <Paper className="app-header" radius={0} shadow="none">
+      <Group justify="flex-end" className="app-header-actions">
+        <Menu position="bottom-end" shadow="md" width={180}>
+          <Menu.Target>
+            <Button
+              variant="subtle"
+              color="gray"
+              className="header-user-card"
+              rightSection={<Text c="dimmed" size="sm">▾</Text>}
+            >
+              <Group gap="sm" wrap="nowrap">
+                <Avatar color="blue" radius="xl">
+                  {avatarText}
+                </Avatar>
+                <div>
+                  <Text fw={700} c="dark.7">
+                    {username}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    昵称
+                  </Text>
+                </div>
+              </Group>
+            </Button>
+          </Menu.Target>
 
-      <div className="app-header-actions">
-        <button type="button" className="header-ghost-button">
-          消息中心
-        </button>
-        <button
-          type="button"
-          className="header-primary-button"
-          onClick={handleLogout}
-        >
-          退出登录
-        </button>
-        <div className="header-user-card" aria-label="当前用户">
-          <span className="header-user-avatar">GP</span>
-          <div>
-            <strong>Goal Planner</strong>
-            <span>Frontend Shell</span>
-          </div>
-        </div>
-      </div>
-    </header>
+          <Menu.Dropdown>
+            <Menu.Item onClick={handleLogout}>退出登录</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      </Group>
+    </Paper>
   )
 }
