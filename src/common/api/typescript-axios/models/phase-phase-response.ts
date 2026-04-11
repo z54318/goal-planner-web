@@ -15,24 +15,11 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import type { GoalGoal } from './goal-goal';
+import type { PhasePhase } from './phase-phase';
 
-export interface GoalGoalListData {
-    /**
-     * List 目标列表
-     */
-    'list'?: Array<GoalGoal>;
-    /**
-     * Page 当前页
-     */
-    'page'?: number;
-    /**
-     * PageSize 每页条数
-     */
-    'page_size'?: number;
-    /**
-     * Total 总数
-     */
-    'total'?: number;
+export interface PhasePhaseResponse {
+    'code'?: number;
+    'data'?: PhasePhase;
+    'message'?: string;
 }
 

@@ -239,10 +239,12 @@ export const GoalsApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary 获取目标列表
+         * @param {number} [page] 页码，从1开始
+         * @param {number} [pageSize] 每页条数
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        goalsList: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        goalsList: async (page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/goals`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -257,6 +259,14 @@ export const GoalsApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication BearerAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
 
             localVarHeaderParameter['Accept'] = 'application/json';
 
@@ -348,11 +358,13 @@ export const GoalsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary 获取目标列表
+         * @param {number} [page] 页码，从1开始
+         * @param {number} [pageSize] 每页条数
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async goalsList(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GoalGoalListResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.goalsList(options);
+        async goalsList(page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GoalGoalListResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.goalsList(page, pageSize, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GoalsApi.goalsList']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -419,11 +431,12 @@ export const GoalsApiFactory = function (configuration?: Configuration, basePath
         /**
          * 
          * @summary 获取目标列表
+         * @param {GoalsApiGoalsListRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        goalsList(options?: RawAxiosRequestConfig): AxiosPromise<GoalGoalListResponse> {
-            return localVarFp.goalsList(options).then((request) => request(axios, basePath));
+        goalsList(requestParameters: GoalsApiGoalsListRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<GoalGoalListResponse> {
+            return localVarFp.goalsList(requestParameters.page, requestParameters.pageSize, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -489,6 +502,21 @@ export interface GoalsApiGoalUpdateStatusRequest {
 }
 
 /**
+ * Request parameters for goalsList operation in GoalsApi.
+ */
+export interface GoalsApiGoalsListRequest {
+    /**
+     * 页码，从1开始
+     */
+    readonly page?: number
+
+    /**
+     * 每页条数
+     */
+    readonly pageSize?: number
+}
+
+/**
  * GoalsApi - object-oriented interface
  */
 export class GoalsApi extends BaseAPI {
@@ -550,11 +578,12 @@ export class GoalsApi extends BaseAPI {
     /**
      * 
      * @summary 获取目标列表
+     * @param {GoalsApiGoalsListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public goalsList(options?: RawAxiosRequestConfig) {
-        return GoalsApiFp(this.configuration).goalsList(options).then((request) => request(this.axios, this.basePath));
+    public goalsList(requestParameters: GoalsApiGoalsListRequest = {}, options?: RawAxiosRequestConfig) {
+        return GoalsApiFp(this.configuration).goalsList(requestParameters.page, requestParameters.pageSize, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

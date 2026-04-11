@@ -432,7 +432,7 @@ export function MenusPage() {
         onClose={closeModal}
         title={modalMode === 'create' ? '新增菜单' : '编辑菜单'}
         centered
-        radius="xl"
+        radius="md"
         size="lg"
       >
         <Text c="dimmed" mb="md">

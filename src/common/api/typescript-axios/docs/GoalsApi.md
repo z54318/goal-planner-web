@@ -304,11 +304,21 @@ import {
 const configuration = new Configuration();
 const apiInstance = new GoalsApi(configuration);
 
-const { status, data } = await apiInstance.goalsList();
+let page: number; //页码，从1开始 (optional) (default to undefined)
+let pageSize: number; //每页条数 (optional) (default to undefined)
+
+const { status, data } = await apiInstance.goalsList(
+    page,
+    pageSize
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **page** | [**number**] | 页码，从1开始 | (optional) defaults to undefined|
+| **pageSize** | [**number**] | 每页条数 | (optional) defaults to undefined|
 
 
 ### Return type
@@ -329,6 +339,7 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | OK |  -  |
+|**400** | Bad Request |  -  |
 |**401** | Unauthorized |  -  |
 |**500** | Internal Server Error |  -  |
 

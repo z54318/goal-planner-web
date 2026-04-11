@@ -23,6 +23,14 @@ export interface TaskTaskListData {
      */
     'list'?: Array<TaskTask>;
     /**
+     * Page 当前页
+     */
+    'page'?: number;
+    /**
+     * PageSize 每页条数
+     */
+    'page_size'?: number;
+    /**
      * Total 总数量
      */
     'total'?: number;

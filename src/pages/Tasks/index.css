@@ -86,8 +86,7 @@
   color: var(--text-main);
 }
 
-.tasks-refresh-button,
-.tasks-action-button {
+.tasks-refresh-button {
   border: none;
   border-radius: 14px;
   padding: 12px 16px;
@@ -104,13 +103,11 @@
   color: #fff;
 }
 
-.tasks-refresh-button:hover,
-.tasks-action-button:hover {
+.tasks-refresh-button:hover {
   transform: translateY(-1px);
 }
 
-.tasks-refresh-button:disabled,
-.tasks-action-button:disabled {
+.tasks-refresh-button:disabled {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -170,22 +167,18 @@
   line-height: 1.7;
 }
 
-.tasks-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 246px;
-}
-
 .tasks-actions-cell {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  min-width: 132px;
+  justify-items: end;
 }
 
 .tasks-row-secondary-actions {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
+  align-items: center;
 }
 
 .tasks-status-chip {
@@ -214,26 +207,31 @@
   color: #3f8b21;
 }
 
-.tasks-action-button {
-  background: rgba(20, 61, 112, 0.08);
-  color: var(--text-main);
-  min-width: 72px;
-  min-height: 38px;
-  padding: 0 12px;
-  white-space: nowrap;
+.tasks-status-select {
+  width: 132px;
+  min-width: 132px;
 }
 
-.tasks-action-button .mantine-Button-inner,
-.tasks-action-button .mantine-Button-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1.2;
+.tasks-status-select .mantine-Input-input {
+  min-height: 36px;
+  border-radius: 10px;
+  font-weight: 700;
+  background: rgba(248, 250, 255, 0.96);
+  padding-left: 12px;
+  padding-right: 32px;
+  text-align: center;
 }
 
-.tasks-action-button.is-current {
-  background: rgba(45, 108, 223, 0.12);
-  color: #1f4f83;
+.tasks-row-edit-button {
+  min-height: 36px;
+  padding-inline: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.tasks-row-delete-button {
+  border-radius: 12px;
+  border: 1px solid rgba(209, 90, 78, 0.14);
 }
 
 .tasks-empty-state {
@@ -244,6 +242,11 @@
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.68);
   color: var(--text-faint);
+}
+
+.tasks-pagination {
+  display: flex;
+  justify-content: center;
 }
 
 .tasks-form {
@@ -288,5 +291,18 @@
 
   .tasks-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tasks-actions-cell,
+  .tasks-status-select {
+    min-width: 0;
+  }
+
+  .tasks-status-select {
+    width: 100%;
+  }
+
+  .tasks-row-secondary-actions {
+    justify-content: flex-start;
   }
 }

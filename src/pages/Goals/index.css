@@ -118,6 +118,12 @@
   gap: 12px;
 }
 
+.goals-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
 .goals-list-item {
   width: 100%;
   display: grid;

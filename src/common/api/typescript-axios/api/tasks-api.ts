@@ -242,10 +242,12 @@ export const TasksApiAxiosParamCreator = function (configuration?: Configuration
          * @param {string} [status] 任务状态
          * @param {number} [goalId] 目标ID
          * @param {number} [phaseId] 阶段ID
+         * @param {number} [page] 页码，从1开始
+         * @param {number} [pageSize] 每页条数
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        tasksList: async (status?: string, goalId?: number, phaseId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        tasksList: async (status?: string, goalId?: number, phaseId?: number, page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/tasks`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -271,6 +273,14 @@ export const TasksApiAxiosParamCreator = function (configuration?: Configuration
 
             if (phaseId !== undefined) {
                 localVarQueryParameter['phase_id'] = phaseId;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
             }
 
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -366,11 +376,13 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {string} [status] 任务状态
          * @param {number} [goalId] 目标ID
          * @param {number} [phaseId] 阶段ID
+         * @param {number} [page] 页码，从1开始
+         * @param {number} [pageSize] 每页条数
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async tasksList(status?: string, goalId?: number, phaseId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TaskTaskListResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.tasksList(status, goalId, phaseId, options);
+        async tasksList(status?: string, goalId?: number, phaseId?: number, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TaskTaskListResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.tasksList(status, goalId, phaseId, page, pageSize, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TasksApi.tasksList']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -442,7 +454,7 @@ export const TasksApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         tasksList(requestParameters: TasksApiTasksListRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<TaskTaskListResponse> {
-            return localVarFp.tasksList(requestParameters.status, requestParameters.goalId, requestParameters.phaseId, options).then((request) => request(axios, basePath));
+            return localVarFp.tasksList(requestParameters.status, requestParameters.goalId, requestParameters.phaseId, requestParameters.page, requestParameters.pageSize, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -525,6 +537,16 @@ export interface TasksApiTasksListRequest {
      * 阶段ID
      */
     readonly phaseId?: number
+
+    /**
+     * 页码，从1开始
+     */
+    readonly page?: number
+
+    /**
+     * 每页条数
+     */
+    readonly pageSize?: number
 }
 
 /**
@@ -594,7 +616,7 @@ export class TasksApi extends BaseAPI {
      * @throws {RequiredError}
      */
     public tasksList(requestParameters: TasksApiTasksListRequest = {}, options?: RawAxiosRequestConfig) {
-        return TasksApiFp(this.configuration).tasksList(requestParameters.status, requestParameters.goalId, requestParameters.phaseId, options).then((request) => request(this.axios, this.basePath));
+        return TasksApiFp(this.configuration).tasksList(requestParameters.status, requestParameters.goalId, requestParameters.phaseId, requestParameters.page, requestParameters.pageSize, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

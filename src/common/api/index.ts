@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import { getAuthToken } from '../auth/token'
 import { appEnv } from '../config/env'
-import { AuthApi, Configuration, GoalsApi, MenusApi, PlansApi, RbacApi, TasksApi, UsersApi } from './typescript-axios'
+import { AuthApi, Configuration, GoalsApi, MenusApi, PhasesApi, PlansApi, RbacApi, TasksApi, UsersApi } from './typescript-axios'
 
 // 统一解析 OpenAPI 请求错误，优先展示后端返回的 message。
 function resolveApiErrorMessage(error: AxiosError) {
@@ -63,6 +63,7 @@ export const configuration = new Configuration({
 export const authApi = new AuthApi(configuration, undefined, instance)
 export const goalsApi = new GoalsApi(configuration, undefined, instance)
 export const menusApi = new MenusApi(configuration, undefined, instance)
+export const phasesApi = new PhasesApi(configuration, undefined, instance)
 export const plansApi = new PlansApi(configuration, undefined, instance)
 export const rbacApi = new RbacApi(configuration, undefined, instance)
 export const tasksApi = new TasksApi(configuration, undefined, instance)

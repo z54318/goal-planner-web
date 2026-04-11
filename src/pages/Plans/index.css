@@ -40,6 +40,12 @@
   width: fit-content;
 }
 
+.plans-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .plans-panel-header h1,
 .plans-panel-header h2,
 .plans-phase-card h3 {
@@ -80,6 +86,12 @@
 .plans-task-list {
   display: grid;
   gap: 14px;
+}
+
+.plans-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
 }
 
 .plans-goal-item,
@@ -127,7 +139,7 @@
 
 .plans-goal-item span,
 .plans-phase-index,
-.plans-task-meta span {
+.plans-task-meta > span {
   color: var(--text-faint);
   font-size: 13px;
 }
@@ -181,6 +193,18 @@
   gap: 12px;
 }
 
+.plans-phase-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.plans-phase-form {
+  display: grid;
+  gap: 16px;
+}
+
 .plans-overview-meta span {
   color: #4c6683;
   font-size: 13px;
@@ -204,8 +228,87 @@
 
 .plans-task-meta {
   display: grid;
-  gap: 6px;
+  gap: 8px;
+  min-width: 220px;
   text-align: right;
+  justify-items: end;
+}
+
+.plans-task-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.plans-task-action-button {
+  min-width: 112px;
+  min-height: 40px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+.plans-task-action-button--edit {
+  box-shadow: 0 12px 24px rgba(45, 108, 223, 0.18);
+}
+
+.plans-task-action-button--delete {
+  border: 1px solid rgba(209, 90, 78, 0.18);
+}
+
+.plans-task-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.plans-task-form-field--wide {
+  grid-column: 1 / -1;
+}
+
+.plans-task-modal-body {
+  padding-top: 8px;
+}
+
+.plans-task-datetime-input .mantine-Input-description {
+  margin-bottom: 6px;
+}
+
+.plans-task-datetime-input .mantine-Input-input {
+  min-height: 52px;
+  padding-inline-end: 48px;
+  font-weight: 600;
+  color: #17324b;
+  background: rgba(248, 250, 255, 0.9);
+  border-color: rgba(45, 108, 223, 0.18);
+}
+
+.plans-task-datetime-input .mantine-Input-section {
+  color: #2d6cdf;
+}
+
+.plans-task-datetime-input .mantine-Input-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.88;
+}
+
+.plans-task-datetime-input .mantine-Input-input::-webkit-datetime-edit,
+.plans-task-datetime-input .mantine-Input-input::-webkit-datetime-edit-fields-wrapper,
+.plans-task-datetime-input .mantine-Input-input::-webkit-datetime-edit-text,
+.plans-task-datetime-input .mantine-Input-input::-webkit-datetime-edit-month-field,
+.plans-task-datetime-input .mantine-Input-input::-webkit-datetime-edit-day-field,
+.plans-task-datetime-input .mantine-Input-input::-webkit-datetime-edit-year-field,
+.plans-task-datetime-input .mantine-Input-input::-webkit-datetime-edit-hour-field,
+.plans-task-datetime-input .mantine-Input-input::-webkit-datetime-edit-minute-field {
+  color: #17324b;
+  font-weight: 600;
+}
+
+.plans-task-datetime-input .mantine-Input-input:focus {
+  border-color: rgba(45, 108, 223, 0.42);
+  box-shadow: 0 0 0 3px rgba(45, 108, 223, 0.12);
 }
 
 .plans-empty-state,
@@ -254,5 +357,16 @@
 
   .plans-task-meta {
     text-align: left;
+    min-width: 0;
+    justify-items: start;
+  }
+
+  .plans-task-actions,
+  .plans-phase-actions {
+    justify-content: flex-start;
+  }
+
+  .plans-task-form-grid {
+    grid-template-columns: 1fr;
   }
 }

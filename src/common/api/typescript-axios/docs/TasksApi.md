@@ -308,11 +308,15 @@ const apiInstance = new TasksApi(configuration);
 let status: string; //任务状态 (optional) (default to undefined)
 let goalId: number; //目标ID (optional) (default to undefined)
 let phaseId: number; //阶段ID (optional) (default to undefined)
+let page: number; //页码，从1开始 (optional) (default to undefined)
+let pageSize: number; //每页条数 (optional) (default to undefined)
 
 const { status, data } = await apiInstance.tasksList(
     status,
     goalId,
-    phaseId
+    phaseId,
+    page,
+    pageSize
 );
 ```
 
@@ -323,6 +327,8 @@ const { status, data } = await apiInstance.tasksList(
 | **status** | [**string**] | 任务状态 | (optional) defaults to undefined|
 | **goalId** | [**number**] | 目标ID | (optional) defaults to undefined|
 | **phaseId** | [**number**] | 阶段ID | (optional) defaults to undefined|
+| **page** | [**number**] | 页码，从1开始 | (optional) defaults to undefined|
+| **pageSize** | [**number**] | 每页条数 | (optional) defaults to undefined|
 
 
 ### Return type

@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Badge,
   Button,
-  Card,
   Checkbox,
   Group,
   Modal,
@@ -11,6 +10,7 @@ import {
   Select,
   SimpleGrid,
   Stack,
+  Table,
   Tabs,
   Text,
   TextInput,
@@ -400,7 +400,7 @@ export function SettingsPage() {
                     onClick={() => void loadRbacData()}
                     loading={isLoading}
                   >
-                    {isLoading ? "刷新中..." : "刷新"}
+                    刷新
                   </Button>
                 </Group>
 
@@ -630,7 +630,7 @@ export function SettingsPage() {
                       onClick={() => void loadRbacData()}
                       loading={isLoading}
                     >
-                      {isLoading ? "刷新中..." : "刷新"}
+                      刷新
                     </Button>
                     <Button onClick={openCreatePermissionModal}>
                       新增权限点
@@ -639,65 +639,71 @@ export function SettingsPage() {
                 </Group>
 
                 {sortedPermissions.length > 0 ? (
-                  <Stack className="settings-permission-list" gap="sm">
-                    {sortedPermissions.map((permission) => (
-                      <Card
-                        key={permission.id ?? permission.code}
-                        className="settings-permission-card"
-                        radius="xl"
-                        withBorder
-                      >
-                        <Group
-                          justify="space-between"
-                          align="flex-start"
-                          className="settings-permission-head"
-                        >
-                          <div>
-                            <Text fw={700} c="dark.7">
-                              {permission.name || "未命名权限"}
-                            </Text>
-                            <Text c="dimmed" mt={4}>
-                              {permission.code || "-"}
-                            </Text>
-                          </div>
-                          <Group
-                            gap="xs"
-                            className="settings-permission-actions"
-                          >
-                            <Button
-                              variant="light"
-                              onClick={() =>
-                                openEditPermissionModal(permission)
-                              }
-                            >
-                              编辑
-                            </Button>
-                            <Button
-                              color="red"
-                              variant="light"
-                              onClick={() =>
-                                void handleDeletePermission(permission)
-                              }
-                              loading={deletingPermissionId === permission.id}
-                            >
-                              {deletingPermissionId === permission.id
-                                ? "删除中..."
-                                : "删除"}
-                            </Button>
-                          </Group>
-                        </Group>
-
-                        <Group gap="md" className="settings-permission-meta">
-                          <Text size="sm" c="dimmed">
-                            ID：{permission.id ?? "-"}
-                          </Text>
-                          <Text size="sm" c="dimmed">
-                            更新时间：{formatDateTime(permission.updated_at)}
-                          </Text>
-                        </Group>
-                      </Card>
-                    ))}
-                  </Stack>
+                  <Table.ScrollContainer
+                    minWidth={860}
+                    className="settings-table-wrapper"
+                  >
+                    <Table
+                      className="settings-table settings-permissions-table"
+                      highlightOnHover
+                      withTableBorder
+                    >
+                      <thead>
+                        <tr>
+                          <th scope="col">权限名称</th>
+                          <th scope="col">权限编码</th>
+                          <th scope="col">ID</th>
+                          <th scope="col">更新时间</th>
+                          <th scope="col">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sortedPermissions.map((permission) => (
+                          <tr key={permission.id ?? permission.code}>
+                            <td>
+                              <Text fw={700} c="dark.7">
+                                {permission.name || "未命名权限"}
+                              </Text>
+                            </td>
+                            <td>
+                              <Text c="dimmed">{permission.code || "-"}</Text>
+                            </td>
+                            <td>
+                              <Text>{permission.id ?? "-"}</Text>
+                            </td>
+                            <td>
+                              <Text>{formatDateTime(permission.updated_at)}</Text>
+                            </td>
+                            <td>
+                              <Group
+                                gap="xs"
+                                className="settings-permission-actions"
+                              >
+                                <Button
+                                  variant="light"
+                                  onClick={() =>
+                                    openEditPermissionModal(permission)
+                                  }
+                                >
+                                  编辑
+                                </Button>
+                                <Button
+                                  color="red"
+                                  variant="light"
+                                  onClick={() =>
+                                    void handleDeletePermission(permission)
+                                  }
+                                  loading={deletingPermissionId === permission.id}
+                                >
+                                  删除
+                                </Button>
+                              </Group>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </Table.ScrollContainer>
                 ) : (
                   <div className="settings-empty-state">
                     <Text c="dimmed">
@@ -724,7 +730,7 @@ export function SettingsPage() {
                     onClick={() => void loadUsersData()}
                     loading={isUsersLoading}
                   >
-                    {isUsersLoading ? "刷新中..." : "刷新"}
+                    刷新
                   </Button>
                 </Group>
 
@@ -929,7 +935,7 @@ export function SettingsPage() {
         onClose={closePermissionModal}
         title={permissionModalMode === "create" ? "新增权限" : "编辑权限"}
         centered
-        radius="xl"
+        radius="md"
       >
         <Text c="dimmed" mb="md">
           权限编码建议与菜单权限码保持一致，便于角色授权和菜单可见性联动。

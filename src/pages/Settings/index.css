@@ -139,6 +139,42 @@
   gap: 14px;
 }
 
+.settings-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid rgba(22, 50, 79, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.settings-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+}
+
+.settings-table th,
+.settings-table td {
+  padding: 18px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(22, 50, 79, 0.08);
+  vertical-align: middle;
+}
+
+.settings-table th {
+  background: rgba(240, 246, 255, 0.95);
+  color: #49637f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.settings-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.settings-table tbody tr:hover {
+  background: rgba(245, 249, 255, 0.78);
+}
+
 .settings-permission-card,
 .settings-checkbox-card,
 .settings-role-card,
@@ -178,12 +214,6 @@
   flex-wrap: wrap;
 }
 
-.settings-permission-card {
-  display: grid;
-  gap: 12px;
-  padding: 18px;
-}
-
 .settings-permission-head strong,
 .settings-checkbox-card strong {
   color: #17324b;
@@ -202,6 +232,10 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.settings-permissions-table .settings-permission-actions {
+  flex-wrap: nowrap;
 }
 
 .settings-permission-meta,

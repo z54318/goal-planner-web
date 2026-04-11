@@ -13,26 +13,15 @@
  */
 
 
-// May contain unused imports in some cases
-// @ts-ignore
-import type { GoalGoal } from './goal-goal';
 
-export interface GoalGoalListData {
+export interface PlanUpdatePlanRequest {
     /**
-     * List 目标列表
+     * Overview 计划概述
      */
-    'list'?: Array<GoalGoal>;
+    'overview'?: string;
     /**
-     * Page 当前页
+     * Title 计划标题
      */
-    'page'?: number;
-    /**
-     * PageSize 每页条数
-     */
-    'page_size'?: number;
-    /**
-     * Total 总数
-     */
-    'total'?: number;
+    'title'?: string;
 }
 
