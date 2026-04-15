@@ -23,6 +23,7 @@ import type {
   PlanPlan,
 } from "../../common/api";
 import { useAppMessage } from "../../common/message/AppMessageProvider";
+import { ConfirmActionModal } from "../../common/components/ConfirmActionModal";
 import {
   getGoalDisplayStatus,
   getGoalStatusLabel,
@@ -71,6 +72,7 @@ export function GoalsPage() {
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isPlanLoading, setIsPlanLoading] = useState(false);
   const [isPlanGenerating, setIsPlanGenerating] = useState(false);
+  const [isRegenerateModalOpen, setIsRegenerateModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUpdatingGoal, setIsUpdatingGoal] = useState(false);
@@ -384,6 +386,10 @@ export function GoalsPage() {
         await loadGoalPlan(selectedGoalId);
       }
 
+      if (selectedPlan) {
+        setIsRegenerateModalOpen(false);
+      }
+
       message.success(
         selectedPlan ? "目标计划已重新生成。" : "目标计划已生成。"
       );
@@ -398,6 +404,15 @@ export function GoalsPage() {
     } finally {
       setIsPlanGenerating(false);
     }
+  }
+
+  function handlePlanActionClick() {
+    if (!selectedPlan) {
+      void handleGenerateGoalPlan();
+      return;
+    }
+
+    setIsRegenerateModalOpen(true);
   }
 
   async function handleDeleteGoal() {
@@ -699,8 +714,8 @@ export function GoalsPage() {
                   >
                     <Title order={3}>目标计划</Title>
                     <Button
-                      onClick={() => void handleGenerateGoalPlan()}
-                      disabled={!selectedGoalId || isDetailLoading}
+                      onClick={handlePlanActionClick}
+                      disabled={!selectedGoalId || isDetailLoading || isPlanGenerating}
                       loading={isPlanGenerating}
                     >
                       {isPlanGenerating
@@ -784,7 +799,21 @@ export function GoalsPage() {
         </Paper>
       </section>
 
-      <Modal
+      <ConfirmActionModal
+        opened={isRegenerateModalOpen}
+        onClose={() => {
+          if (!isPlanGenerating) {
+            setIsRegenerateModalOpen(false);
+          }
+        }}
+        title="重新生成计划"
+        content="重新生成后，当前目标下的计划内容可能会被新的 AI 结果覆盖，是否继续？"
+        onConfirm={() => void handleGenerateGoalPlan()}
+        confirmLabel={isPlanGenerating ? "重新生成中..." : "确认重新生成"}
+        loading={isPlanGenerating}
+      />
+
+      <ConfirmActionModal
         opened={isDeleteModalOpen}
         onClose={() => {
           if (!isDeletingGoal) {
@@ -792,33 +821,12 @@ export function GoalsPage() {
           }
         }}
         title="删除目标"
-        centered
-        radius="md"
-      >
-        <Stack gap="md">
-          <Text c="dimmed">
-            删除目标会将目标下的计划和任务全部删除，是否删除？
-          </Text>
-
-          <Group justify="flex-end" className="goals-modal-actions">
-            <Button
-              variant="light"
-              color="gray"
-              onClick={() => setIsDeleteModalOpen(false)}
-              disabled={isDeletingGoal}
-            >
-              取消
-            </Button>
-            <Button
-              color="red"
-              onClick={() => void handleDeleteGoal()}
-              loading={isDeletingGoal}
-            >
-              删除目标
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+        content="删除目标会将目标下的计划和任务全部删除，是否删除？"
+        onConfirm={() => void handleDeleteGoal()}
+        confirmLabel="删除目标"
+        confirmColor="red"
+        loading={isDeletingGoal}
+      />
 
       <Modal
         opened={isCreateModalOpen}

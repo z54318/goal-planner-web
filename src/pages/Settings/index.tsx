@@ -19,6 +19,7 @@ import {
 } from "@mantine/core";
 import type { RbacPermission, RbacRole, UserUser } from "../../common/api";
 import { rbacApi, usersApi } from "../../common/api";
+import { ConfirmActionModal } from "../../common/components/ConfirmActionModal";
 import { fetchMenuItems } from "../../common/menu/app-menu";
 import { useAppMessage } from "../../common/message/AppMessageProvider";
 import { formatDateTime } from "../../common/utils/date";
@@ -72,6 +73,8 @@ export function SettingsPage() {
   const [permissionForm, setPermissionForm] =
     useState<PermissionFormState>(emptyPermissionForm);
   const [isPermissionSaving, setIsPermissionSaving] = useState(false);
+  const [permissionToDelete, setPermissionToDelete] =
+    useState<RbacPermission | null>(null);
   const [deletingPermissionId, setDeletingPermissionId] = useState<
     number | null
   >(null);
@@ -287,28 +290,21 @@ export function SettingsPage() {
     }
   }
 
-  async function handleDeletePermission(permission: RbacPermission) {
-    if (!permission.id) {
+  async function handleDeletePermission() {
+    if (!permissionToDelete?.id) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `确定删除权限“${permission.name ?? permission.code ?? "未命名权限"}”吗？`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    setDeletingPermissionId(permission.id);
+    setDeletingPermissionId(permissionToDelete.id);
 
     try {
       await rbacApi.adminPermissionDelete({
-        id: permission.id,
+        id: permissionToDelete.id,
       });
       message.success("权限已删除。");
       await refreshSidebarMenus();
       await loadRbacData();
+      setPermissionToDelete(null);
     } catch (error) {
       message.error(error instanceof Error ? error.message : "删除权限失败。");
     } finally {
@@ -690,9 +686,7 @@ export function SettingsPage() {
                                 <Button
                                   color="red"
                                   variant="light"
-                                  onClick={() =>
-                                    void handleDeletePermission(permission)
-                                  }
+                                  onClick={() => setPermissionToDelete(permission)}
                                   loading={deletingPermissionId === permission.id}
                                 >
                                   删除
@@ -982,6 +976,23 @@ export function SettingsPage() {
           </Stack>
         </form>
       </Modal>
+
+      <ConfirmActionModal
+        opened={Boolean(permissionToDelete)}
+        onClose={() => {
+          if (!deletingPermissionId) {
+            setPermissionToDelete(null);
+          }
+        }}
+        onConfirm={() => void handleDeletePermission()}
+        title="删除权限"
+        content={`确定删除权限“${
+          permissionToDelete?.name ?? permissionToDelete?.code ?? "未命名权限"
+        }”吗？`}
+        confirmLabel="删除权限"
+        confirmColor="red"
+        loading={Boolean(deletingPermissionId)}
+      />
     </>
   );
 }

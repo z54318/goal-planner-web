@@ -1,34 +1,35 @@
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
 import {
   Badge,
   Button,
   Card,
   Group,
-  Modal,
   Pagination,
   Paper,
-  Select,
   SimpleGrid,
   Stack,
   Text,
-  TextInput,
-  Textarea,
   Title,
   UnstyledButton,
 } from "@mantine/core";
+import { IconPencil, IconTrash } from "@tabler/icons-react";
 import {
-  IconCalendarEvent,
-  IconPencil,
-  IconTrash,
-} from "@tabler/icons-react";
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import type {
   GoalGoal,
+  PhaseNextStepSuggestion,
+  PlanNextStepSuggestion,
   PhaseUpdatePhaseRequest,
   PlanTaskPriority,
   PlanPhase,
   PlanPlan,
   PlanTask,
+  TaskNextStepSuggestion,
   TaskCreateTaskRequest,
   TaskTaskPriority,
   TaskUpdateTaskRequest,
@@ -46,74 +47,41 @@ import {
   getGoalStatusLabel,
   getTaskStatusLabel,
 } from "../../common/dicts";
+import { ConfirmActionModal } from "../../common/components/ConfirmActionModal";
 import { formatDateTime } from "../../common/utils/date";
 import "./index.css";
+import { PhaseEditModal } from "./components/PhaseEditModal";
+import { NextSuggesModal } from "./components/NextSuggesModal";
+import { PlanEditModal } from "./components/PlanEditModal";
+import { SortableTaskItem } from "./components/SortableTaskItem";
+import { TaskEditModal } from "./components/TaskEditModal";
+import {
+  emptyPhaseForm,
+  emptyPlanForm,
+  emptyTaskForm,
+  type PhaseFormState,
+  type PlanFormState,
+  type PlanTaskFormState,
+  taskPriorityOptions,
+  type TaskModalMode,
+} from "./components/formState";
 
 function flattenPlanTasks(phases: PlanPhase[]) {
   return phases.flatMap((phase) => phase.tasks ?? []);
 }
 
-type PhaseFormState = {
-  title: string;
-  description: string;
-  sort_order: string;
-};
-
-const emptyPhaseForm: PhaseFormState = {
-  title: "",
-  description: "",
-  sort_order: "",
-};
-
-type PlanFormState = {
-  title: string;
-  overview: string;
-};
-
-type TaskModalMode = "create" | "edit";
-
-type PlanTaskFormState = {
-  title: string;
-  description: string;
-  deliverables: string;
-  deadline: string;
-  estimated_days: string;
-  priority: "" | TaskTaskPriority;
-  sort_order: string;
-  phase_id: string;
-};
-
-const emptyPlanForm: PlanFormState = {
-  title: "",
-  overview: "",
-};
-
-const emptyTaskForm: PlanTaskFormState = {
-  title: "",
-  description: "",
-  deliverables: "",
-  deadline: "",
-  estimated_days: "",
-  priority: "",
-  sort_order: "",
-  phase_id: "",
-};
-
 const PLANS_GOAL_PAGE_SIZE = 6;
 
-const taskPriorityOptions = [
-  { value: TaskPriorityEnum.TaskPriorityHigh, label: "高" },
-  { value: TaskPriorityEnum.TaskPriorityMedium, label: "中" },
-  { value: TaskPriorityEnum.TaskPriorityLow, label: "低" },
-];
-
-function getTaskPriorityLabel(priority?: PlanTaskPriority | TaskTaskPriority | null) {
+function getTaskPriorityLabel(
+  priority?: PlanTaskPriority | TaskTaskPriority | null
+) {
   if (!priority) {
     return "-";
   }
 
   return (
-    taskPriorityOptions.find((item) => item.value === priority)?.label ?? priority
+    taskPriorityOptions.find((item) => item.value === priority)?.label ??
+    priority
   );
 }
 
@@ -139,6 +107,31 @@ function normalizeTaskPriority(
   return "";
 }
 
+type SuggestionScope = "plan" | "phase" | "task";
+
+type ExecutionSuggestion =
+  | PlanNextStepSuggestion
+  | PhaseNextStepSuggestion
+  | TaskNextStepSuggestion;
+
+type SuggestionModalState = {
+  opened: boolean;
+  scope: SuggestionScope;
+  entityId: number | null;
+  title: string;
+  emptyText: string;
+  suggestion: ExecutionSuggestion | null;
+};
+
+const emptySuggestionModalState: SuggestionModalState = {
+  opened: false,
+  scope: "plan",
+  entityId: null,
+  title: "",
+  emptyText: "",
+  suggestion: null,
+};
+
 function toDateTimeLocalValue(value?: string | null) {
   if (!value) {
     return "";
@@ -150,7 +143,9 @@ function toDateTimeLocalValue(value?: string | null) {
     return value.slice(0, 16);
   }
 
-  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  const offsetDate = new Date(
+    date.getTime() - date.getTimezoneOffset() * 60_000
+  );
   return offsetDate.toISOString().slice(0, 16);
 }
 
@@ -177,6 +172,7 @@ export function PlansPage() {
   const [isGoalsLoading, setIsGoalsLoading] = useState(false);
   const [isPlanLoading, setIsPlanLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isRegenerateModalOpen, setIsRegenerateModalOpen] = useState(false);
   const [isDeletingPlan, setIsDeletingPlan] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPhaseModalOpen, setIsPhaseModalOpen] = useState(false);
@@ -194,11 +190,24 @@ export function PlansPage() {
   const [isTaskSaving, setIsTaskSaving] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<PlanTask | null>(null);
   const [isTaskDeleting, setIsTaskDeleting] = useState(false);
+  const [activeSuggestionRequest, setActiveSuggestionRequest] = useState<{
+    scope: SuggestionScope | null;
+    entityId: number | null;
+  }>({
+    scope: null,
+    entityId: null,
+  });
+  const [suggestionModalState, setSuggestionModalState] =
+    useState<SuggestionModalState>(emptySuggestionModalState);
+  const [sortingPhaseId, setSortingPhaseId] = useState<number | null>(null);
   const message = useAppMessage();
 
   const selectedGoal =
     goalList.find((goal) => goal.id === selectedGoalId) ?? null;
-  const phases = selectedPlan?.phases ?? [];
+  const phases = useMemo(
+    () => selectedPlan?.phases ?? [],
+    [selectedPlan?.phases]
+  );
   const taskList = useMemo(() => flattenPlanTasks(phases), [phases]);
   const completedTasks = taskList.filter(
     (task) => task.status === "done"
@@ -210,6 +219,59 @@ export function PlansPage() {
     }
 
     return /计划不存在|暂无计划|not found|404|不存在/i.test(error.message);
+  }
+
+  function isSuggestionNotFoundError(error: unknown) {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    return /执行建议不存在|计划执行建议不存在|阶段执行建议不存在|任务执行建议不存在|not found|404|不存在/i.test(
+      error.message
+    );
+  }
+
+  function getSuggestionScopeLabel(scope: SuggestionScope) {
+    if (scope === "plan") {
+      return "计划";
+    }
+
+    if (scope === "phase") {
+      return "阶段";
+    }
+
+    return "任务";
+  }
+
+  function isSuggestionLoading(scope: SuggestionScope, entityId?: number | null) {
+    return (
+      activeSuggestionRequest.scope === scope &&
+      activeSuggestionRequest.entityId === entityId
+    );
+  }
+
+  function openSuggestionModal(
+    scope: SuggestionScope,
+    entityId: number,
+    suggestion: ExecutionSuggestion | null
+  ) {
+    const scopeLabel = getSuggestionScopeLabel(scope);
+
+    setSuggestionModalState({
+      opened: true,
+      scope,
+      entityId,
+      title: `${scopeLabel}执行建议`,
+      emptyText: `当前没有可展示的${scopeLabel}执行建议。`,
+      suggestion,
+    });
+  }
+
+  function closeSuggestionModal() {
+    setSuggestionModalState((current) => ({
+      ...current,
+      opened: false,
+    }));
   }
 
   function updatePhaseField<Key extends keyof PhaseFormState>(
@@ -313,6 +375,7 @@ export function PlansPage() {
       });
 
       setSelectedPlan(response.data.data ?? null);
+      setIsRegenerateModalOpen(false);
       message.success("计划已重新生成。");
     } catch (error) {
       message.error(
@@ -339,9 +402,7 @@ export function PlansPage() {
       setIsDeleteModalOpen(false);
       message.success("计划已删除。");
     } catch (error) {
-      message.error(
-        error instanceof Error ? error.message : "删除计划失败。"
-      );
+      message.error(error instanceof Error ? error.message : "删除计划失败。");
     } finally {
       setIsDeletingPlan(false);
     }
@@ -470,9 +531,7 @@ export function PlansPage() {
       closePlanModal();
       message.success("计划信息已更新。");
     } catch (error) {
-      message.error(
-        error instanceof Error ? error.message : "更新计划失败。"
-      );
+      message.error(error instanceof Error ? error.message : "更新计划失败。");
     } finally {
       setIsPlanSaving(false);
     }
@@ -493,7 +552,9 @@ export function PlansPage() {
     const request: PhaseUpdatePhaseRequest = {
       title: phaseForm.title.trim(),
       description: phaseForm.description.trim() || undefined,
-      sort_order: phaseForm.sort_order ? Number(phaseForm.sort_order) : undefined,
+      sort_order: phaseForm.sort_order
+        ? Number(phaseForm.sort_order)
+        : undefined,
     };
 
     setIsPhaseSaving(true);
@@ -511,9 +572,7 @@ export function PlansPage() {
       closePhaseModal();
       message.success("阶段信息已更新。");
     } catch (error) {
-      message.error(
-        error instanceof Error ? error.message : "更新阶段失败。"
-      );
+      message.error(error instanceof Error ? error.message : "更新阶段失败。");
     } finally {
       setIsPhaseSaving(false);
     }
@@ -571,9 +630,7 @@ export function PlansPage() {
 
       closeTaskModal();
     } catch (error) {
-      message.error(
-        error instanceof Error ? error.message : "保存任务失败。"
-      );
+      message.error(error instanceof Error ? error.message : "保存任务失败。");
     } finally {
       setIsTaskSaving(false);
     }
@@ -598,11 +655,233 @@ export function PlansPage() {
       setTaskToDelete(null);
       message.success("任务已删除。");
     } catch (error) {
-      message.error(
-        error instanceof Error ? error.message : "删除任务失败。"
-      );
+      message.error(error instanceof Error ? error.message : "删除任务失败。");
     } finally {
       setIsTaskDeleting(false);
+    }
+  }
+
+  async function handlePhaseTaskDragEnd(
+    phaseId: number,
+    phaseTasks: PlanTask[],
+    event: DragEndEvent
+  ) {
+    // 拖拽结束时，active.id 是被拖动元素的 ID，over.id 是当前拖动位置所在元素的 ID。
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    // 拖拽前后的索引位置
+    const oldIndex = phaseTasks.findIndex(
+      (task) => String(task.id) === String(active.id)
+    );
+    const newIndex = phaseTasks.findIndex(
+      (task) => String(task.id) === String(over.id)
+    );
+
+    if (oldIndex < 0 || newIndex < 0) {
+      return;
+    }
+
+    // arrayMove 会返回一个新的数组，原数组保持不变。计算出新的任务顺序
+    const nextTasks = arrayMove(phaseTasks, oldIndex, newIndex);
+    const nextTaskIds = nextTasks
+      .map((task) => task.id)
+      .filter((id): id is number => typeof id === "number");
+
+    if (nextTaskIds.length !== nextTasks.length) {
+      message.error("当前阶段存在缺少任务 ID 的数据，暂时无法调整顺序。");
+      return;
+    }
+
+    setSelectedPlan((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        phases: (current.phases ?? []).map((phase) =>
+          phase.id === phaseId
+            ? {
+                ...phase,
+                tasks: nextTasks,
+              }
+            : phase
+        ),
+      };
+    });
+
+    setSortingPhaseId(phaseId);
+
+    try {
+      await tasksApi.phaseTasksSort({
+        id: phaseId,
+        request: {
+          task_ids: nextTaskIds,
+        },
+      });
+
+      message.success("阶段任务顺序已更新。");
+    } catch (error) {
+      setSelectedPlan((current) => {
+        if (!current) {
+          return current;
+        }
+
+        return {
+          ...current,
+          phases: (current.phases ?? []).map((phase) =>
+            phase.id === phaseId
+              ? {
+                  ...phase,
+                  tasks: phaseTasks,
+                }
+              : phase
+          ),
+        };
+      });
+
+      message.error(
+        error instanceof Error ? error.message : "更新阶段任务顺序失败。"
+      );
+    } finally {
+      setSortingPhaseId((current) => (current === phaseId ? null : current));
+    }
+  }
+
+  async function getExecutionSuggestion(
+    scope: SuggestionScope,
+    entityId: number
+  ) {
+    if (scope === "plan") {
+      const result = await plansApi.planNextStepGet({
+        id: entityId,
+      });
+      return result.data.data ?? null;
+    }
+
+    if (scope === "phase") {
+      const result = await phasesApi.phaseNextStepGet({
+        id: entityId,
+      });
+      return result.data.data ?? null;
+    }
+
+    const result = await tasksApi.taskNextStepGet({
+      id: entityId,
+    });
+    return result.data.data ?? null;
+  }
+
+  async function generateExecutionSuggestion(
+    scope: SuggestionScope,
+    entityId: number
+  ) {
+    if (scope === "plan") {
+      const result = await plansApi.planNextStepSuggest({
+        id: entityId,
+      });
+      return result.data.data ?? null;
+    }
+
+    if (scope === "phase") {
+      const result = await phasesApi.phaseNextStepSuggest({
+        id: entityId,
+      });
+      return result.data.data ?? null;
+    }
+
+    const result = await tasksApi.taskNextStepSuggest({
+      id: entityId,
+    });
+    return result.data.data ?? null;
+  }
+
+  async function handleSuggestion(scope: SuggestionScope, entityId: number) {
+    const scopeLabel = getSuggestionScopeLabel(scope);
+
+    setActiveSuggestionRequest({
+      scope,
+      entityId,
+    });
+
+    try {
+      const suggestion = await getExecutionSuggestion(scope, entityId);
+
+      if (suggestion) {
+        openSuggestionModal(scope, entityId, suggestion);
+        return;
+      }
+
+      const generatedSuggestion = await generateExecutionSuggestion(
+        scope,
+        entityId
+      );
+      openSuggestionModal(scope, entityId, generatedSuggestion);
+    } catch (error) {
+      if (isSuggestionNotFoundError(error)) {
+        try {
+          const generatedSuggestion = await generateExecutionSuggestion(
+            scope,
+            entityId
+          );
+          openSuggestionModal(scope, entityId, generatedSuggestion);
+          return;
+        } catch (generateError) {
+          message.error(
+            generateError instanceof Error
+              ? generateError.message
+              : `生成${scopeLabel}执行建议失败。`
+          );
+          return;
+        }
+      }
+
+      message.error(
+        error instanceof Error
+          ? error.message
+          : `获取${scopeLabel}执行建议失败。`
+      );
+    } finally {
+      setActiveSuggestionRequest({
+        scope: null,
+        entityId: null,
+      });
+    }
+  }
+
+  async function handleRegenerateSuggestion() {
+    if (!suggestionModalState.entityId) {
+      message.error("当前没有可用的执行建议对象。");
+      return;
+    }
+
+    const { scope, entityId } = suggestionModalState;
+    const scopeLabel = getSuggestionScopeLabel(scope);
+
+    setActiveSuggestionRequest({
+      scope,
+      entityId,
+    });
+
+    try {
+      const suggestion = await generateExecutionSuggestion(scope, entityId);
+      openSuggestionModal(scope, entityId, suggestion);
+      message.success(`${scopeLabel}执行建议已重新生成。`);
+    } catch (error) {
+      message.error(
+        error instanceof Error
+          ? error.message
+          : `重新生成${scopeLabel}执行建议失败。`
+      );
+    } finally {
+      setActiveSuggestionRequest({
+        scope: null,
+        entityId: null,
+      });
     }
   }
 
@@ -611,6 +890,8 @@ export function PlansPage() {
     // 首次进入时初始化计划数据。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const isAnySuggestionLoading = activeSuggestionRequest.scope !== null;
 
   return (
     <section className="plans-shell">
@@ -671,13 +952,13 @@ export function PlansPage() {
                 );
               })}
             </div>
-            ) : (
-              <div className="plans-empty-state">
-                <Text c="dimmed">
-                  {isGoalsLoading ? "目标加载中..." : "当前还没有目标。"}
-                </Text>
-              </div>
-            )}
+          ) : (
+            <div className="plans-empty-state">
+              <Text c="dimmed">
+                {isGoalsLoading ? "目标加载中..." : "当前还没有目标。"}
+              </Text>
+            </div>
+          )}
 
           {goalTotal > PLANS_GOAL_PAGE_SIZE ? (
             <Pagination
@@ -713,13 +994,28 @@ export function PlansPage() {
                   编辑计划
                 </Button>
                 <Button
-                  onClick={() => void handleRegeneratePlan()}
-                  disabled={!selectedGoalId}
+                  onClick={() => setIsRegenerateModalOpen(true)}
+                  disabled={!selectedGoalId || isRegenerating}
                   loading={isRegenerating}
                 >
                   {isRegenerating ? "重新生成中..." : "重新生成计划"}
                 </Button>
-                 <Button
+                <Button
+                  variant="light"
+                  color="gray"
+                  onClick={() => {
+                    if (!selectedPlan?.id) {
+                      return;
+                    }
+
+                    void handleSuggestion("plan", selectedPlan.id);
+                  }}
+                  disabled={!selectedPlan || isAnySuggestionLoading}
+                  loading={isSuggestionLoading("plan", selectedPlan?.id)}
+                >
+                  计划执行建议
+                </Button>
+                <Button
                   color="red"
                   variant="light"
                   onClick={() => setIsDeleteModalOpen(true)}
@@ -818,6 +1114,21 @@ export function PlansPage() {
                           </Badge>
                           <Button
                             variant="light"
+                            color="gray"
+                            onClick={() => {
+                              if (!phase.id) {
+                                return;
+                              }
+
+                              void handleSuggestion("phase", phase.id);
+                            }}
+                            disabled={!phase.id || isAnySuggestionLoading}
+                            loading={isSuggestionLoading("phase", phase.id)}
+                          >
+                            阶段执行建议
+                          </Button>
+                          <Button
+                            variant="light"
                             color="blue"
                             onClick={() => openCreateTaskModal(phase)}
                             disabled={!phase.id}
@@ -846,64 +1157,140 @@ export function PlansPage() {
                       ) : null}
 
                       {phase.tasks && phase.tasks.length > 0 ? (
-                        <div className="plans-task-list">
-                          {phase.tasks.map((task: PlanTask) => (
-                            <Paper
-                              key={task.id ?? `${phase.id}-${task.title}`}
-                              className="plans-task-row"
-                              radius="lg"
-                              p="md"
-                              withBorder
-                            >
-                              <div>
-                                <Text fw={700}>
-                                  {task.title || "未命名任务"}
-                                </Text>
-                                <Text c="dimmed" mt={6}>
-                                  {task.description ||
-                                    task.deliverables ||
-                                    "暂无任务说明。"}
-                                </Text>
-                              </div>
-                              <div className="plans-task-meta">
-                                <Badge variant="light" color="blue">
-                                  {getTaskStatusLabel(task.status)}
-                                </Badge>
-                                <Text size="sm" c="dimmed">
-                                  优先级 {getTaskPriorityLabel(task.priority)}
-                                </Text>
-                                <Text size="sm" c="dimmed">
-                                  截止 {formatDateTime(task.deadline)}
-                                </Text>
-                                <Text size="sm" c="dimmed">
-                                  预计 {task.estimated_days ?? 0} 天
-                                </Text>
-                                <Group gap="xs" className="plans-task-actions">
-                                  <Button
-                                    className="plans-task-action-button plans-task-action-button--edit"
-                                    variant="filled"
-                                    color="blue"
-                                    leftSection={<IconPencil size={15} stroke={1.9} />}
-                                    onClick={() => openEditTaskModal(task)}
-                                    disabled={!task.id}
-                                  >
-                                    编辑任务
-                                  </Button>
-                                  <Button
-                                    className="plans-task-action-button plans-task-action-button--delete"
-                                    variant="light"
-                                    color="red"
-                                    leftSection={<IconTrash size={15} stroke={1.9} />}
-                                    onClick={() => setTaskToDelete(task)}
-                                    disabled={!task.id}
-                                  >
-                                    删除任务
-                                  </Button>
-                                </Group>
-                              </div>
-                            </Paper>
-                          ))}
-                        </div>
+                        <DndContext
+                          collisionDetection={closestCenter}
+                          onDragEnd={(event) => {
+                            if (!phase.id || sortingPhaseId === phase.id) {
+                              return;
+                            }
+
+                            void handlePhaseTaskDragEnd(
+                              phase.id,
+                              phase.tasks ?? [],
+                              event
+                            );
+                          }}
+                        >
+                          <SortableContext
+                            items={phase.tasks
+                              .filter(
+                                (task): task is PlanTask & { id: number } =>
+                                  typeof task.id === "number"
+                              )
+                              .map((task) => String(task.id))}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            <div className="plans-task-list">
+                              {phase.tasks.map((task: PlanTask) => (
+                                <SortableTaskItem
+                                  key={task.id ?? `${phase.id}-${task.title}`}
+                                  id={String(task.id)}
+                                >
+                                  {(dragHandle) => (
+                                    <Paper
+                                      className="plans-task-row"
+                                      radius="lg"
+                                      p="md"
+                                      withBorder
+                                    >
+                                      <div className="plans-task-main">
+                                        <div className="plans-task-title-row">
+                                          {dragHandle}
+                                          <Text fw={700}>
+                                            {task.title || "未命名任务"}
+                                          </Text>
+                                        </div>
+                                        <Text c="dimmed" mt={6}>
+                                          {task.description ||
+                                            task.deliverables ||
+                                            "暂无任务说明。"}
+                                        </Text>
+                                      </div>
+                                      <div className="plans-task-meta">
+                                        <Badge variant="light" color="blue">
+                                          {getTaskStatusLabel(task.status)}
+                                        </Badge>
+                                        <Text size="sm" c="dimmed">
+                                          优先级{" "}
+                                          {getTaskPriorityLabel(task.priority)}
+                                        </Text>
+                                        <Text size="sm" c="dimmed">
+                                          截止 {formatDateTime(task.deadline)}
+                                        </Text>
+                                        <Text size="sm" c="dimmed">
+                                          预计 {task.estimated_days ?? 0} 天
+                                        </Text>
+                                        <Group
+                                          gap="xs"
+                                          className="plans-task-actions"
+                                        >
+                                          <Button
+                                            className="plans-task-action-button"
+                                            variant="light"
+                                            color="gray"
+                                            onClick={() => {
+                                              if (!task.id) {
+                                                return;
+                                              }
+
+                                              void handleSuggestion(
+                                                "task",
+                                                task.id
+                                              );
+                                            }}
+                                            disabled={
+                                              !task.id || isAnySuggestionLoading
+                                            }
+                                            loading={isSuggestionLoading(
+                                              "task",
+                                              task.id
+                                            )}
+                                          >
+                                            任务执行建议
+                                          </Button>
+                                          <Button
+                                            className="plans-task-action-button plans-task-action-button--edit"
+                                            variant="filled"
+                                            color="blue"
+                                            leftSection={
+                                              <IconPencil
+                                                size={15}
+                                                stroke={1.9}
+                                              />
+                                            }
+                                            onClick={() =>
+                                              openEditTaskModal(task)
+                                            }
+                                            disabled={!task.id}
+                                          >
+                                            编辑任务
+                                          </Button>
+                                          <Button
+                                            className="plans-task-action-button plans-task-action-button--delete"
+                                            variant="light"
+                                            color="red"
+                                            leftSection={
+                                              <IconTrash
+                                                size={15}
+                                                stroke={1.9}
+                                              />
+                                            }
+                                            onClick={() =>
+                                              setTaskToDelete(task)
+                                            }
+                                            disabled={!task.id}
+                                          >
+                                            删除任务
+                                          </Button>
+                                        </Group>
+                                      </div>
+                                    </Paper>
+                                  )}
+                                </SortableTaskItem>
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
                       ) : (
                         <div className="plans-empty-inline">
                           <Text c="dimmed">该阶段暂时没有任务。</Text>
@@ -932,53 +1319,30 @@ export function PlansPage() {
         )}
       </Paper>
 
-      <Modal
+      <PlanEditModal
         opened={isPlanModalOpen}
         onClose={closePlanModal}
-        title="编辑计划"
-        centered
-        radius="md"
-      >
-        <form className="plans-phase-form" onSubmit={handleSavePlan}>
-          <Stack gap="md">
-            <TextInput
-              label="计划标题"
-              value={planForm.title}
-              onChange={(event) =>
-                updatePlanField("title", event.currentTarget.value)
-              }
-              placeholder="请输入计划标题"
-              required
-            />
+        onSubmit={handleSavePlan}
+        form={planForm}
+        isSaving={isPlanSaving}
+        onFieldChange={updatePlanField}
+      />
 
-            <Textarea
-              label="计划概述"
-              minRows={5}
-              value={planForm.overview}
-              onChange={(event) =>
-                updatePlanField("overview", event.currentTarget.value)
-              }
-              placeholder="请输入计划概述"
-            />
+      <ConfirmActionModal
+        opened={isRegenerateModalOpen}
+        onClose={() => {
+          if (!isRegenerating) {
+            setIsRegenerateModalOpen(false);
+          }
+        }}
+        title="重新生成计划"
+        content="重新生成后，当前计划中的阶段和任务安排可能会被新的 AI 结果覆盖，是否继续？"
+        onConfirm={() => void handleRegeneratePlan()}
+        confirmLabel={isRegenerating ? "重新生成中..." : "确认重新生成"}
+        loading={isRegenerating}
+      />
 
-            <Group justify="flex-end">
-              <Button
-                variant="light"
-                color="gray"
-                onClick={closePlanModal}
-                disabled={isPlanSaving}
-              >
-                取消
-              </Button>
-              <Button type="submit" loading={isPlanSaving}>
-                保存计划
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
-
-      <Modal
+      <ConfirmActionModal
         opened={isDeleteModalOpen}
         onClose={() => {
           if (!isDeletingPlan) {
@@ -986,224 +1350,35 @@ export function PlansPage() {
           }
         }}
         title="删除计划"
-        centered
-        radius="md"
-      >
-        <Stack gap="md">
-          <Text c="dimmed">
-            删除计划会将计划下的阶段和任务全部删除，是否删除？
-          </Text>
+        content="删除计划会将计划下的阶段和任务全部删除，是否删除？"
+        onConfirm={() => void handleDeletePlan()}
+        confirmLabel="删除计划"
+        confirmColor="red"
+        loading={isDeletingPlan}
+      />
 
-          <Group justify="flex-end">
-            <Button
-              variant="light"
-              color="gray"
-              onClick={() => setIsDeleteModalOpen(false)}
-              disabled={isDeletingPlan}
-            >
-              取消
-            </Button>
-            <Button
-              color="red"
-              onClick={() => void handleDeletePlan()}
-              loading={isDeletingPlan}
-            >
-              删除计划
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-
-      <Modal
+      <PhaseEditModal
         opened={isPhaseModalOpen}
         onClose={closePhaseModal}
-        title="编辑阶段"
-        centered
-        radius="md"
-      >
-        {isPhaseLoading ? (
-          <div className="plans-empty-inline">
-            <Text c="dimmed">阶段详情加载中...</Text>
-          </div>
-        ) : (
-          <form className="plans-phase-form" onSubmit={handleSavePhase}>
-            <Stack gap="md">
-              <TextInput
-                label="阶段标题"
-                value={phaseForm.title}
-                onChange={(event) =>
-                  updatePhaseField("title", event.currentTarget.value)
-                }
-                placeholder="请输入阶段标题"
-                required
-              />
+        onSubmit={handleSavePhase}
+        form={phaseForm}
+        isLoading={isPhaseLoading}
+        isSaving={isPhaseSaving}
+        onFieldChange={updatePhaseField}
+      />
 
-              <Textarea
-                label="阶段描述"
-                minRows={4}
-                value={phaseForm.description}
-                onChange={(event) =>
-                  updatePhaseField("description", event.currentTarget.value)
-                }
-                placeholder="请输入阶段描述"
-              />
-
-              <TextInput
-                label="排序值"
-                value={phaseForm.sort_order}
-                onChange={(event) =>
-                  updatePhaseField("sort_order", event.currentTarget.value)
-                }
-                placeholder="例如：1"
-              />
-
-              <Group justify="flex-end">
-                <Button
-                  variant="light"
-                  color="gray"
-                  onClick={closePhaseModal}
-                  disabled={isPhaseSaving}
-                >
-                  取消
-                </Button>
-                <Button type="submit" loading={isPhaseSaving}>
-                  保存阶段
-                </Button>
-              </Group>
-            </Stack>
-          </form>
-        )}
-      </Modal>
-
-      <Modal
+      <TaskEditModal
         opened={isTaskModalOpen}
         onClose={closeTaskModal}
-        title={taskModalMode === "create" ? "新增任务" : "编辑任务"}
-        centered
-        radius="md"
-        size={920}
-        classNames={{
-          body: "plans-task-modal-body",
-        }}
-      >
-        <form className="plans-phase-form" onSubmit={handleSaveTask}>
-          <Stack gap="md">
-            <TextInput
-              label="任务标题"
-              size="md"
-              value={taskForm.title}
-              onChange={(event) =>
-                updateTaskField("title", event.currentTarget.value)
-              }
-              placeholder="请输入任务标题"
-              required
-            />
+        onSubmit={handleSaveTask}
+        mode={taskModalMode}
+        form={taskForm}
+        phases={phases}
+        isSaving={isTaskSaving}
+        onFieldChange={updateTaskField}
+      />
 
-            <Textarea
-              label="任务描述"
-              size="md"
-              minRows={4}
-              value={taskForm.description}
-              onChange={(event) =>
-                updateTaskField("description", event.currentTarget.value)
-              }
-              placeholder="请输入任务描述"
-            />
-
-            <Textarea
-              label="预期产出"
-              size="md"
-              minRows={3}
-              value={taskForm.deliverables}
-              onChange={(event) =>
-                updateTaskField("deliverables", event.currentTarget.value)
-              }
-              placeholder="请输入这项任务完成后要产出的结果"
-            />
-
-            <Select
-              label="所属阶段"
-              size="md"
-              value={taskForm.phase_id || null}
-              data={phases
-                .filter((phase) => phase.id)
-                .map((phase) => ({
-                  value: String(phase.id),
-                  label: phase.title || `阶段 ${phase.id}`,
-                }))}
-              onChange={(value) => updateTaskField("phase_id", value ?? "")}
-              searchable
-            />
-
-            <div className="plans-task-form-grid">
-              <div className="plans-task-form-field plans-task-form-field--wide">
-                <TextInput
-                  className="plans-task-datetime-input"
-                  label="任务截止时间"
-                  description="选择任务最晚完成的日期和时间"
-                  type="datetime-local"
-                  size="md"
-                  leftSection={<IconCalendarEvent size={18} stroke={1.8} />}
-                  value={taskForm.deadline}
-                  onChange={(event) =>
-                    updateTaskField("deadline", event.currentTarget.value)
-                  }
-                />
-              </div>
-
-              <TextInput
-                label="预计天数"
-                size="md"
-                value={taskForm.estimated_days}
-                onChange={(event) =>
-                  updateTaskField("estimated_days", event.currentTarget.value)
-                }
-                placeholder="例如：3"
-              />
-
-              <Select
-                label="优先级"
-                size="md"
-                value={taskForm.priority || null}
-                data={taskPriorityOptions}
-                clearable
-                onChange={(value) =>
-                  updateTaskField(
-                    "priority",
-                    (value ?? "") as PlanTaskFormState["priority"]
-                  )
-                }
-              />
-
-              <TextInput
-                label="排序值"
-                size="md"
-                value={taskForm.sort_order}
-                onChange={(event) =>
-                  updateTaskField("sort_order", event.currentTarget.value)
-                }
-                placeholder="例如：1"
-              />
-            </div>
-
-            <Group justify="flex-end">
-              <Button
-                variant="light"
-                color="gray"
-                onClick={closeTaskModal}
-                disabled={isTaskSaving}
-              >
-                取消
-              </Button>
-              <Button type="submit" loading={isTaskSaving}>
-                {taskModalMode === "create" ? "创建任务" : "保存任务"}
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
-
-      <Modal
+      <ConfirmActionModal
         opened={Boolean(taskToDelete)}
         onClose={() => {
           if (!isTaskDeleting) {
@@ -1211,29 +1386,27 @@ export function PlansPage() {
           }
         }}
         title="删除任务"
-        centered
-        radius="md"
-      >
-        <Stack gap="md">
-          <Text c="dimmed">
-            删除任务“{taskToDelete?.title ?? "未命名任务"}”后将无法恢复，是否删除？
-          </Text>
+        content={`删除任务“${
+          taskToDelete?.title ?? "未命名任务"
+        }”后将无法恢复，是否删除？`}
+        onConfirm={() => void handleDeleteTask()}
+        confirmLabel="删除任务"
+        confirmColor="red"
+        loading={isTaskDeleting}
+      />
 
-          <Group justify="flex-end">
-            <Button
-              variant="light"
-              color="gray"
-              onClick={() => setTaskToDelete(null)}
-              disabled={isTaskDeleting}
-            >
-              取消
-            </Button>
-            <Button color="red" onClick={() => void handleDeleteTask()} loading={isTaskDeleting}>
-              删除任务
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+      <NextSuggesModal
+        opened={suggestionModalState.opened}
+        onClose={closeSuggestionModal}
+        title={suggestionModalState.title}
+        emptyText={suggestionModalState.emptyText}
+        suggestion={suggestionModalState.suggestion}
+        onRegenerate={() => void handleRegenerateSuggestion()}
+        isRegenerating={isSuggestionLoading(
+          suggestionModalState.scope,
+          suggestionModalState.entityId
+        )}
+      />
     </section>
   );
 }

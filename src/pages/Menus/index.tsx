@@ -16,6 +16,7 @@ import {
 } from '@mantine/core'
 import type { MenuCreateMenuRequest, MenuMenu } from '../../common/api'
 import { menusApi } from '../../common/api'
+import { ConfirmActionModal } from '../../common/components/ConfirmActionModal'
 import { fetchMenuItems } from '../../common/menu/app-menu'
 import { useAppMessage } from '../../common/message/AppMessageProvider'
 import { formatDateTime } from '../../common/utils/date'
@@ -148,6 +149,7 @@ export function MenusPage() {
   const [isModalLoading, setIsModalLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deletingMenuId, setDeletingMenuId] = useState<number | null>(null)
+  const [menuToDelete, setMenuToDelete] = useState<MenuMenu | null>(null)
   const message = useAppMessage()
 
   const flatMenus = flattenMenus(menuTree)
@@ -278,26 +280,21 @@ export function MenusPage() {
     }
   }
 
-  async function handleDeleteMenu(menu: MenuMenu) {
-    if (!menu.id) {
+  async function handleDeleteMenu() {
+    if (!menuToDelete?.id) {
       return
     }
 
-    const confirmed = window.confirm(`确定删除菜单“${menu.name ?? '未命名菜单'}”吗？`)
-
-    if (!confirmed) {
-      return
-    }
-
-    setDeletingMenuId(menu.id)
+    setDeletingMenuId(menuToDelete.id)
 
     try {
       await menusApi.adminMenuDelete({
-        id: menu.id,
+        id: menuToDelete.id,
       })
 
       await refreshSidebarMenus()
       await loadMenuList()
+      setMenuToDelete(null)
       message.success('菜单已删除。')
     } catch (error) {
       message.error(error instanceof Error ? error.message : '删除菜单失败。')
@@ -308,6 +305,8 @@ export function MenusPage() {
 
   useEffect(() => {
     void loadMenuList()
+    // 页面初始化时加载菜单数据即可。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -402,7 +401,7 @@ export function MenusPage() {
                           <Button
                             color="red"
                             variant="light"
-                            onClick={() => void handleDeleteMenu(menu)}
+                            onClick={() => setMenuToDelete(menu)}
                             loading={deletingMenuId === menu.id}
                           >
                             {deletingMenuId === menu.id ? '删除中...' : '删除'}
@@ -556,6 +555,21 @@ export function MenusPage() {
           </form>
         )}
       </Modal>
+
+      <ConfirmActionModal
+        opened={Boolean(menuToDelete)}
+        onClose={() => {
+          if (!deletingMenuId) {
+            setMenuToDelete(null)
+          }
+        }}
+        onConfirm={() => void handleDeleteMenu()}
+        title="删除菜单"
+        content={`确定删除菜单“${menuToDelete?.name ?? '未命名菜单'}”吗？`}
+        confirmLabel="删除菜单"
+        confirmColor="red"
+        loading={Boolean(deletingMenuId)}
+      />
     </>
   )
 }

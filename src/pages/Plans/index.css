@@ -249,6 +249,64 @@
   font-weight: 700;
 }
 
+.plans-task-main {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.plans-task-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.plans-task-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  justify-content: center;
+  padding: 7px 12px;
+  color: #4e6178;
+  background: #f5f7fb;
+  border: 1px solid #dbe3ef;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.plans-task-drag-handle-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.plans-task-drag-handle-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.plans-task-drag-handle:hover {
+  background: #eef3fb;
+  border-color: #c8d6ea;
+  color: #2f4662;
+  transform: translateY(-1px);
+}
+
+.plans-task-drag-handle:active {
+  background: #e6edf8;
+  border-color: #b7c9e3;
+  cursor: grabbing;
+}
+
 .plans-task-action-button--edit {
   box-shadow: 0 12px 24px rgba(45, 108, 223, 0.18);
 }

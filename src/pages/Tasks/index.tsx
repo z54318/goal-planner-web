@@ -33,6 +33,7 @@ import {
   TaskTaskPriority as TaskPriorityEnum,
   TaskTaskStatus as TaskStatusEnum,
 } from '../../common/api'
+import { ConfirmActionModal } from '../../common/components/ConfirmActionModal'
 import { useAppMessage } from '../../common/message/AppMessageProvider'
 import { getTaskStatusLabel, taskStatusOptions } from '../../common/dicts'
 import { formatDateTime } from '../../common/utils/date'
@@ -719,41 +720,20 @@ export function TasksPage() {
         </form>
       </Modal>
 
-      <Modal
+      <ConfirmActionModal
         opened={Boolean(taskToDelete)}
         onClose={() => {
           if (!deletingTaskId) {
             setTaskToDelete(null)
           }
         }}
+        onConfirm={() => void handleDeleteTask()}
         title="删除任务"
-        centered
-        radius="md"
-      >
-        <Stack gap="md">
-          <Text c="dimmed">
-            删除任务“{taskToDelete?.title ?? '未命名任务'}”后将无法恢复，是否删除？
-          </Text>
-
-          <Group justify="flex-end">
-            <Button
-              variant="light"
-              color="gray"
-              onClick={() => setTaskToDelete(null)}
-              disabled={Boolean(deletingTaskId)}
-            >
-              取消
-            </Button>
-            <Button
-              color="red"
-              onClick={() => void handleDeleteTask()}
-              loading={Boolean(deletingTaskId)}
-            >
-              删除任务
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+        content={`删除任务“${taskToDelete?.title ?? '未命名任务'}”后将无法恢复，是否删除？`}
+        confirmLabel="删除任务"
+        confirmColor="red"
+        loading={Boolean(deletingTaskId)}
+      />
     </section>
   )
 }

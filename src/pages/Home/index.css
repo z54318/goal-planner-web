@@ -104,7 +104,7 @@
 
 .dashboard-task-list,
 .dashboard-goal-list {
-  display: grid;
+  /* display: grid; */
   gap: 14px;
 }
 
